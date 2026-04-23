@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Selector</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── EDIT YOUR PROMPTS in the <script> block below ── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f4f6f9;
+      --surface:   #ffffff;
+      --border:    #dde2ea;
+      --border-hi: #b8c0ce;
+      --text:      #3a4254;
+      --text-dim:  #8a94a6;
+      --text-head: #1a2030;
+      --accent:    #2563eb;
+      --accent-lo: rgba(37,99,235,.07);
+      --accent-hi: rgba(37,99,235,.14);
+      --copy-ok:   #16a34a;
+      --copy-lo:   rgba(22,163,74,.09);
+      --mono:      'DM Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+      --radius:    10px;
+      --transition: 180ms ease;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* subtle dot texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(0,0,0,.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 860px;
+      padding: 48px 24px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    header h1 {
+      font-family: var(--sans);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-head);
+      letter-spacing: .02em;
+    }
+
+    header .tag {
+      font-family: var(--mono);
+      font-size: .7rem;
+      color: var(--accent);
+      background: var(--accent-lo);
+      border: 1px solid rgba(240,160,48,.25);
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    /* ── Prompt cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition), transform var(--transition), box-shadow var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent-lo) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--border-hi);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.10);
+    }
+
+    .card:hover::after { opacity: 1; }
+
+    .card.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(37,99,235,.06) 0%, var(--surface) 80%);
+      box-shadow: 0 2px 8px rgba(37,99,235,.12);
+    }
+
+    .card.active::after { opacity: 0; }
+
+    .card.copied {
+      border-color: var(--copy-ok);
+      background: linear-gradient(135deg, var(--copy-lo) 0%, var(--surface) 80%);
+      animation: pulse-copy .5s ease;
+    }
+
+    @keyframes pulse-copy {
+      0%   { box-shadow: 0 0 0 0 rgba(22,163,74,.35); }
+      60%  { box-shadow: 0 0 0 8px rgba(22,163,74,0); }
+      100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+    }
+
+    .card-number {
+      font-family: var(--mono);
+      font-size: .65rem;
+      color: var(--text-dim);
+      letter-spacing: .08em;
+    }
+
+    .card.active   .card-number { color: var(--accent); }
+    .card.copied   .card-number { color: var(--copy-ok); }
+
+    .card-title {
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--text-head);
+      line-height: 1.35;
+    }
+
+    .card-desc {
+      font-size: .78rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-family: var(--mono);
+      font-size: .62rem;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: .05em;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .card.copied .card-badge {
+      opacity: 1;
+      background: var(--copy-lo);
+      color: var(--copy-ok);
+      border: 1px solid rgba(61,214,140,.3);
+    }
+
+    /* ── Display panel ── */
+    .display-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color var(--transition);
+      background: var(--surface);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    .display-wrap.has-content { border-color: var(--border-hi); }
+
+    .display-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #f8f9fb;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .display-label {
+      font-family: var(--mono);
+      font-size: .68rem;
+      color: var(--text-dim);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .display-title {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text-head);
+    }
+
+    .copy-btn {
+      font-family: var(--mono);
+      font-size: .68rem;
+      font-weight: 500;
+      letter-spacing: .06em;
+      padding: 4px 12px;
+      border-radius: 5px;
+      border: 1px solid var(--border-hi);
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-lo);
+    }
+
+    .copy-btn.ok {
+      border-color: var(--copy-ok);
+      color: var(--copy-ok);
+      background: var(--copy-lo);
+    }
+
+    .display-body {
+      padding: 22px 22px;
+      min-height: 160px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .display-body pre {
+      font-family: var(--mono);
+      font-size: .82rem;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .placeholder {
+      font-family: var(--mono);
+      font-size: .8rem;
+      color: var(--text-dim);
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    footer {
+      font-family: var(--mono);
+      font-size: .65rem;
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: .06em;
+    }
+
+    /* ── Keyboard hint ── */
+    .hint {
+      font-family: var(--mono);
+      font-size: .67rem;
+      color: var(--text-dim);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    kbd {
+      background: #eef0f4;
+      border: 1px solid var(--border-hi);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-family: var(--mono);
+      font-size: .65rem;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <h1>Prompt Selector</h1>
+    <span class="tag">Internal Use</span>
+    <div class="hint" style="margin-left:auto">
+      <span><kbd>click</kbd> to select &amp; copy</span>
+    </div>
+  </header>
+
+  <!-- Cards injected here -->
+  <div class="cards" id="cards"></div>
+
+  <!-- Display panel -->
+  <div class="display-wrap" id="displayWrap">
+    <div class="display-header">
+      <span class="display-label">Prompt</span>
+      <span class="display-title" id="displayTitle">—</span>
+      <button class="copy-btn" id="copyBtn" style="visibility:hidden" onclick="copyAgain()">COPY AGAIN</button>
+    </div>
+    <div class="display-body">
+      <span class="placeholder" id="placeholder">← Select a prompt above to preview and copy it.</span>
+      <pre id="displayBody" style="display:none"></pre>
+    </div>
+  </div>
+
+  <footer>click once · select &amp; copy · paste anywhere</footer>
+</div>
+
+<script>
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║                  ★  EDIT YOUR PROMPTS HERE  ★                  ║
+  // ╠══════════════════════════════════════════════════════════════════╣
+  // ║  This is the ONLY section you need to touch to customize        ║
+  // ║  this app. Everything else is just styling and logic.           ║
+  // ║                                                                  ║
+  // ║  Each prompt is an object with three fields:                    ║
+  // ║                                                                  ║
+  // ║    title  — short name shown on the card (keep it ≤ 25 chars)  ║
+  // ║    desc   — subtitle shown under the title (one phrase)         ║
+  // ║    text   — the actual prompt that gets copied to clipboard     ║
+  // ║                                                                  ║
+  // ║  HOW TO ADD A PROMPT:                                           ║
+  // ║    Copy one of the blocks below, paste it after the last one    ║
+  // ║    (before the closing bracket "]"), and edit the three fields. ║
+  // ║    Make sure every block except the last ends with a comma.     ║
+  // ║                                                                  ║
+  // ║  HOW TO REMOVE A PROMPT:                                        ║
+  // ║    Delete the entire { title:..., desc:..., text:... } block,  ║
+  // ║    including its trailing comma if it had one.                  ║
+  // ║                                                                  ║
+  // ║  HOW TO EDIT A PROMPT:                                          ║
+  // ║    Change the text between the backtick characters (`...`).     ║
+  // ║    Backticks let the text span multiple lines — just hit Enter  ║
+  // ║    inside them freely. Don't swap them for quotes.              ║
+  // ║                                                                  ║
+  // ║  KEYBOARD SHORTCUTS:                                            ║
+  // ║    Keys 1–6 (or however many prompts you have) trigger each    ║
+  // ║    prompt in order. Works automatically as you add more.        ║
+  // ║                                                                  ║
+  // ║  MAX PROMPTS: No hard limit, but 8–9 is about where the card   ║
+  // ║  grid starts looking crowded on a laptop screen.                ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  const PROMPTS = [
+
+    // ── PROMPT 1 ──────────────────────────────────────────────────────
+    {
+      title: "PHP Follow-up",            // ← card title
+      desc:  "HPI + update/assessment",  // ← card subtitle
+      text:  `I am a psychiatrist. I'd like you to help write the HPI/interval history as well as update/assessment for follow-up visits in PHP. I'm going to give you the transcript from a visit today to work from. For the update/assessment, assume this is following a "carried over" assessment of that includes the demographics, diagnoses, and static information. This "Update" field is a narrative description of how things are going now, with a narrative description of any changes to the plan going forward. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
+      //       ↑ everything between the backticks is what gets copied
+    },
+
+    // ── PROMPT 2 ──────────────────────────────────────────────────────
+    {
+      title: "PHP New Evaluation",
+      desc:  "Full intake note from transcript",
+      text:  `I am a psychiatrist. below I'm going to give you the template that we use for our partial hospitalization program new patient visits. then, I'm going to give you the transcript from a visit today. Use the template to write the psychiatric evaluation. output in plain text, with sections and headers per the template. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.
+
+ADULT PSYCHIATRY PHP INTAKE
+@NAME@ is a @AGE@ @SEX@ who presents to the Adult Psychiatry Partial Hospitalization Program for ***.
+
+HISTORY OF PRESENT ILLNESS
+(narrative and paragraphs)
+
+Past Psychiatric History:
+Substance Use History:
+Social History: 
+Support system is adequate to sustain the patient outside the PHP: {yes, no:22372}
+Family Psychiatric History:
+Current Medications and Outpatient Prescriptions:
+Review of Systems: 
+ 
+ASSESSMENT
+
+DIAGNOSES:  Axis I/II: ***  Axis V: { :23867}
+PLAN (edited as appropriate for the patient)Safety:
+
+No acute safety concerns; remains appropriate for PHP level of care***
+
+Psychopharmacology
+
+Psychosocial and behavioral interventions
+
+Encouraged regular exercise and other behavioral activation strategies
+
+Psychotherapy
+
+Appropriate for intensive CBT and DBT groups***
+Recommend ongoing outpatient therapy after PHP***
+Motivational Interviewing for substance use issues
+
+Medical
+Future Considerations
+Other
+
+Follow-up twice weekly while in PHP
+
+I attest that this patient has a need for partial psychiatric hospitalization programming entailing a minimum of 20 hours per week of therapeutic services, without which this patient would require inpatient psychiatric hospitalization. I also have a reasonable expectation of improvement in the patient's illness and level of functioning via engagement in this programming.`
+    },
+
+    // ── PROMPT 3 ──────────────────────────────────────────────────────
+    {
+      title: "HIV Psych Follow-up",
+      desc:  "HPI + update/assessment",
+      text:  `I am a psychiatrist. I'd like you to help write the HPI/interval history as well as update/assessment for follow-up visits in my outpatient HIV psychiatry clinic. I'm going to give you the transcript from a visit today to work from. For the update/assessment, assume this is following a "carried over" assessment of that includes the demographics, diagnoses, and static information. This "Update" field is a narrative description of how things are going now, with a narrative description of any changes to the plan going forward. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
+    },
+
+    // ── PROMPT 4 ──────────────────────────────────────────────────────
+    {
+      title: "HIV Psych New Eval",
+      desc:  "Full intake note from transcript",
+      text:  `I am a psychiatrist. below I'm going to give you the template that we use for my HIV Psychiatry new patient visits. then, I'm going to give you the transcript from a visit today. Use the template to write the psychiatric evaluation. output in plain text, with sections and headers per the template. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.
+
+#HIV PSYCHIATRY INTAKE
+@NAME@ is a @AGE@ @SEX@ who presents to the HIV Psychiatry for ***.
+
+HISTORY OF PRESENT ILLNESS
+(narrative and paragraphs)
+
+Past Psychiatric History:
+Substance Use History:
+Social History: 
+Support system is adequate to sustain the patient outside the PHP: {yes, no:22372}
+Family Psychiatric History:
+Current Medications and Outpatient Prescriptions:
+Review of Systems: 
+ 
+ASSESSMENT
+
+DIAGNOSES:  Axis I/II: ***  Axis V: { :23867}
+PLAN (edited as appropriate for the patient)Safety:
+
+No acute safety concerns; remains appropriate for outpatient level of care***
+
+Psychopharmacology
+
+Psychosocial and behavioral interventions
+
+Encouraged regular exercise and other behavioral activation strategies
+
+Psychotherapy
+
+Recommend ongoing outpatient therapy 
+Motivational Interviewing for substance use issues
+
+Medical
+Future Considerations
+Other`
+    },
+
+    // ── PROMPT 5 ──────────────────────────────────────────────────────
+    {
+      title: "BHCC Note",
+      desc:  "Collaborative care scribe",
+      text:  `I want you to act as a scribe for cleaning up and writing professional psychiatric consultant notes for me in my role as a psychiatrist in a behavioral health collaborative care program. I will provide either shorthand or other text from the chart for you to convert into a consultative note. In this role, we are not seeing the patient directly, but rather reviewing cases with a care manager and reviewing charts to make recommendations. Notes will be in one of two formats. 1) for initial evaluations, you will be writing only the HPI and Social history, in a narrative form. 2) for follow-ups, narrative form of: summary of last visit, then clinical update, then recommendations, each section with own paragraph(s). For new evaluations, I will primarily have you write the history of present illness and social history. We will write the recommendations later (when prompted). The note should follow a paragraph narrative style, with the length determined by the amount of information provided. Please feel free to rewrite the flow of information in the HPI and social history. For all notes, Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
+    },
+
+    // ── ADD MORE PROMPTS BELOW THIS LINE ──────────────────────────────
+    // Copy the block above, paste it here, edit title/desc/text, save.
+
+  ]; // ← do not delete this line
+
+  // ══════════════════════════════════════════════════════════════════
+  //  Everything below this point is app logic. No need to edit it
+  //  unless you want to change how the app behaves.
+  // ══════════════════════════════════════════════════════════════════
+
+  let activeIndex = null;
+  let copyTimeout = null;
+
+  const cardsEl    = document.getElementById('cards');
+  const displayWrap= document.getElementById('displayWrap');
+  const displayTitle= document.getElementById('displayTitle');
+  const displayBody= document.getElementById('displayBody');
+  const placeholder= document.getElementById('placeholder');
+  const copyBtn    = document.getElementById('copyBtn');
+
+  // Build cards
+  PROMPTS.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${i}`;
+    card.innerHTML = `
+      <span class="card-number">0${i + 1}</span>
+      <div class="card-title">${p.title}</div>
+      <div class="card-desc">${p.desc}</div>
+      <span class="card-badge">COPIED</span>
+    `;
+    card.addEventListener('click', () => selectAndCopy(i));
+    cardsEl.appendChild(card);
+  });
+
+  function selectAndCopy(i) {
+    // Update display
+    activeIndex = i;
+    const p = PROMPTS[i];
+
+    placeholder.style.display = 'none';
+    displayBody.style.display = 'block';
+    displayBody.textContent = p.text;
+    displayTitle.textContent = p.title;
+    copyBtn.style.visibility = 'visible';
+    displayWrap.classList.add('has-content');
+
+    // Mark cards
+    document.querySelectorAll('.card').forEach((c, j) => {
+      c.classList.toggle('active', j === i);
+      c.classList.remove('copied');
+    });
+
+    // Copy to clipboard
+    copyToClipboard(p.text, i);
+  }
+
+  function copyToClipboard(text, cardIndex) {
+    if (copyTimeout) clearTimeout(copyTimeout);
+
+    navigator.clipboard.writeText(text).then(() => {
+      // Flash the card
+      const card = document.getElementById(`card-${cardIndex}`);
+      card.classList.remove('active');
+      card.classList.add('copied');
+
+      // Flash the button
+      copyBtn.textContent = 'COPIED ✓';
+      copyBtn.classList.add('ok');
+
+      copyTimeout = setTimeout(() => {
+        card.classList.remove('copied');
+        card.classList.add('active');
+        copyBtn.textContent = 'COPY AGAIN';
+        copyBtn.classList.remove('ok');
+      }, 1800);
+    }).catch(() => {
+      // Fallback for browsers that block clipboard without HTTPS
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    });
+  }
+
+  function copyAgain() {
+    if (activeIndex === null) return;
+    copyToClipboard(PROMPTS[activeIndex].text, activeIndex);
+  }
+
+  // Keyboard shortcuts: 1–6 to select prompts
+  document.addEventListener('keydown', e => {
+    const n = parseInt(e.key);
+    if (n >= 1 && n <= PROMPTS.length) selectAndCopy(n - 1);
+  });
+</script>
+</body>
+</html>
