@@ -289,6 +289,22 @@
       line-height: 1.6;
     }
 
+    /* ── Section headers in card list ── */
+    .section-header {
+      font-family: var(--mono);
+      font-size: .63rem;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 14px 4px 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2px;
+      user-select: none;
+    }
+
+    .section-header:first-child { padding-top: 2px; }
+
     /* ── Footer ── */
     footer {
       font-family: var(--mono);
@@ -333,7 +349,6 @@
 
   <header>
     <h1>Prompt Selector</h1>
-    <span class="tag">Internal Use</span>
     <div class="hint" style="margin-left:auto">
       <span><kbd>click</kbd> to select &amp; copy</span>
     </div>
@@ -400,18 +415,14 @@
 
   const PROMPTS = [
 
+    // ── SECTION HEADER ────────────────────────────────────────────────
+    // To rename a section, change the `label` value.
+    { type: 'header', label: 'PHP' },
+
     // ── PROMPT 1 ──────────────────────────────────────────────────────
     {
-      title: "PHP Follow-up",            // ← card title
-      desc:  "HPI + update/assessment",  // ← card subtitle
-      text:  `I am a psychiatrist. I'd like you to help write the HPI/interval history as well as update/assessment for follow-up visits in PHP. I'm going to give you the transcript from a visit today to work from. For the update/assessment, assume this is following a "carried over" assessment of that includes the demographics, diagnoses, and static information. This "Update" field is a narrative description of how things are going now, with a narrative description of any changes to the plan going forward. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
-      //       ↑ everything between the backticks is what gets copied
-    },
-
-    // ── PROMPT 2 ──────────────────────────────────────────────────────
-    {
-      title: "PHP New Evaluation",
-      desc:  "Full intake note from transcript",
+      title: "PHP New Evaluation",       // ← card title
+      desc:  "Full intake note from transcript", // ← card subtitle
       text:  `I am a psychiatrist. below I'm going to give you the template that we use for our partial hospitalization program new patient visits. then, I'm going to give you the transcript from a visit today. Use the template to write the psychiatric evaluation. output in plain text, with sections and headers per the template. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.
 
 ADULT PSYCHIATRY PHP INTAKE
@@ -454,16 +465,20 @@ Other
 Follow-up twice weekly while in PHP
 
 I attest that this patient has a need for partial psychiatric hospitalization programming entailing a minimum of 20 hours per week of therapeutic services, without which this patient would require inpatient psychiatric hospitalization. I also have a reasonable expectation of improvement in the patient's illness and level of functioning via engagement in this programming.`
+      //       ↑ everything between the backticks is what gets copied
     },
+
+    // ── PROMPT 2 ──────────────────────────────────────────────────────
+    {
+      title: "PHP Follow-up",
+      desc:  "HPI + update/assessment",
+      text:  `I am a psychiatrist. I'd like you to help write the HPI/interval history as well as update/assessment for follow-up visits in PHP. I'm going to give you the transcript from a visit today to work from. For the update/assessment, assume this is following a "carried over" assessment of that includes the demographics, diagnoses, and static information. This "Update" field is a narrative description of how things are going now, with a narrative description of any changes to the plan going forward. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
+    },
+
+    // ── SECTION HEADER ────────────────────────────────────────────────
+    { type: 'header', label: 'HIV Psychiatry' },
 
     // ── PROMPT 3 ──────────────────────────────────────────────────────
-    {
-      title: "HIV Psych Follow-up",
-      desc:  "HPI + update/assessment",
-      text:  `I am a psychiatrist. I'd like you to help write the HPI/interval history as well as update/assessment for follow-up visits in my outpatient HIV psychiatry clinic. I'm going to give you the transcript from a visit today to work from. For the update/assessment, assume this is following a "carried over" assessment of that includes the demographics, diagnoses, and static information. This "Update" field is a narrative description of how things are going now, with a narrative description of any changes to the plan going forward. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
-    },
-
-    // ── PROMPT 4 ──────────────────────────────────────────────────────
     {
       title: "HIV Psych New Eval",
       desc:  "Full intake note from transcript",
@@ -506,6 +521,16 @@ Future Considerations
 Other`
     },
 
+    // ── PROMPT 4 ──────────────────────────────────────────────────────
+    {
+      title: "HIV Psych Follow-up",
+      desc:  "HPI + update/assessment",
+      text:  `I am a psychiatrist. I'd like you to help write the HPI/interval history as well as update/assessment for follow-up visits in my outpatient HIV psychiatry clinic. I'm going to give you the transcript from a visit today to work from. For the update/assessment, assume this is following a "carried over" assessment of that includes the demographics, diagnoses, and static information. This "Update" field is a narrative description of how things are going now, with a narrative description of any changes to the plan going forward. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
+    },
+
+    // ── SECTION HEADER ────────────────────────────────────────────────
+    { type: 'header', label: 'BHCC' },
+
     // ── PROMPT 5 ──────────────────────────────────────────────────────
     {
       title: "BHCC Note",
@@ -513,8 +538,19 @@ Other`
       text:  `I want you to act as a scribe for cleaning up and writing professional psychiatric consultant notes for me in my role as a psychiatrist in a behavioral health collaborative care program. I will provide either shorthand or other text from the chart for you to convert into a consultative note. In this role, we are not seeing the patient directly, but rather reviewing cases with a care manager and reviewing charts to make recommendations. Notes will be in one of two formats. 1) for initial evaluations, you will be writing only the HPI and Social history, in a narrative form. 2) for follow-ups, narrative form of: summary of last visit, then clinical update, then recommendations, each section with own paragraph(s). For new evaluations, I will primarily have you write the history of present illness and social history. We will write the recommendations later (when prompted). The note should follow a paragraph narrative style, with the length determined by the amount of information provided. Please feel free to rewrite the flow of information in the HPI and social history. For all notes, Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
     },
 
+    // ── SECTION HEADER ────────────────────────────────────────────────
+    { type: 'header', label: 'Other' },
+
+    // ── PROMPT 6 ──────────────────────────────────────────────────────
+    {
+      title: "Phone Note",
+      desc:  "Brief call documentation",
+      text:  `I am a psychiatrist. I'd like you to help write a brief phone note. I'm going to give you either the transcript of the phone call, or shorthand clinical notes. Output in plain text -- no bolding, no fancy formatting. Any bullet points for lists should be a single "-" followed by a single space.`
+    },
+
     // ── ADD MORE PROMPTS BELOW THIS LINE ──────────────────────────────
-    // Copy the block above, paste it here, edit title/desc/text, save.
+    // To add a new section: { type: 'header', label: 'Section Name' },
+    // To add a prompt: copy any block above, paste here, edit the fields.
 
   ]; // ← do not delete this line
 
@@ -533,25 +569,36 @@ Other`
   const placeholder= document.getElementById('placeholder');
   const copyBtn    = document.getElementById('copyBtn');
 
-  // Build cards
-  PROMPTS.forEach((p, i) => {
+  // Separate out just the prompt items for index-based operations
+  const PROMPT_ITEMS = PROMPTS.filter(p => p.type !== 'header');
+
+  // Build cards and section headers
+  let promptIndex = 0;
+  PROMPTS.forEach(p => {
+    if (p.type === 'header') {
+      const hdr = document.createElement('div');
+      hdr.className = 'section-header';
+      hdr.textContent = p.label;
+      cardsEl.appendChild(hdr);
+      return;
+    }
+    const idx = promptIndex++;
     const card = document.createElement('div');
     card.className = 'card';
-    card.id = `card-${i}`;
+    card.id = `card-${idx}`;
     card.innerHTML = `
-      <span class="card-number">0${i + 1}</span>
+      <span class="card-number">0${idx + 1}</span>
       <div class="card-title">${p.title}</div>
       <div class="card-desc">${p.desc}</div>
       <span class="card-badge">COPIED</span>
     `;
-    card.addEventListener('click', () => selectAndCopy(i));
+    card.addEventListener('click', () => selectAndCopy(idx));
     cardsEl.appendChild(card);
   });
 
   function selectAndCopy(i) {
-    // Update display
     activeIndex = i;
-    const p = PROMPTS[i];
+    const p = PROMPT_ITEMS[i];
 
     placeholder.style.display = 'none';
     displayBody.style.display = 'block';
@@ -566,7 +613,6 @@ Other`
       c.classList.remove('copied');
     });
 
-    // Copy to clipboard
     copyToClipboard(p.text, i);
   }
 
@@ -605,13 +651,13 @@ Other`
 
   function copyAgain() {
     if (activeIndex === null) return;
-    copyToClipboard(PROMPTS[activeIndex].text, activeIndex);
+    copyToClipboard(PROMPT_ITEMS[activeIndex].text, activeIndex);
   }
 
-  // Keyboard shortcuts: 1–6 to select prompts
+  // Keyboard shortcuts: 1–N to select prompts
   document.addEventListener('keydown', e => {
     const n = parseInt(e.key);
-    if (n >= 1 && n <= PROMPTS.length) selectAndCopy(n - 1);
+    if (n >= 1 && n <= PROMPT_ITEMS.length) selectAndCopy(n - 1);
   });
 </script>
 </body>
