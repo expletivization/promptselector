@@ -11,10 +11,10 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #f4f6f9;
-      --surface:   #ffffff;
-      --border:    #dde2ea;
-      --border-hi: #b8c0ce;
+      --bg:        #f5f3ef;
+      --surface:   #fdfcfa;
+      --border:    #e2ddd6;
+      --border-hi: #c4bdb3;
       --text:      #3a4254;
       --text-dim:  #8a94a6;
       --text-head: #1a2030;
@@ -44,7 +44,7 @@
       content: '';
       position: fixed;
       inset: 0;
-      background-image: radial-gradient(circle, rgba(0,0,0,.06) 1px, transparent 1px);
+      background-image: radial-gradient(circle, rgba(120,90,60,.07) 1px, transparent 1px);
       background-size: 28px 28px;
       pointer-events: none;
       z-index: 0;
@@ -54,11 +54,11 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 860px;
-      padding: 48px 24px 80px;
+      max-width: 1100px;
+      padding: 40px 28px 64px;
       display: flex;
       flex-direction: column;
-      gap: 36px;
+      gap: 28px;
     }
 
     /* ── Header ── */
@@ -81,18 +81,26 @@
       font-size: .7rem;
       color: var(--accent);
       background: var(--accent-lo);
-      border: 1px solid rgba(240,160,48,.25);
+      border: 1px solid rgba(37,99,235,.2);
       padding: 2px 8px;
       border-radius: 4px;
       letter-spacing: .06em;
       text-transform: uppercase;
     }
 
-    /* ── Prompt cards ── */
-    .cards {
+    /* ── Two-column body ── */
+    .body {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 10px;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* ── Prompt cards — vertical list ── */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
     }
 
     .card {
@@ -213,7 +221,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px 16px;
-      background: #f8f9fb;
+      background: #f7f5f1;
       border-bottom: 1px solid var(--border);
     }
 
@@ -259,7 +267,7 @@
 
     .display-body {
       padding: 22px 22px;
-      min-height: 160px;
+      min-height: 420px;
       display: flex;
       align-items: flex-start;
     }
@@ -290,6 +298,15 @@
       letter-spacing: .06em;
     }
 
+    /* ── Mobile: stack vertically ── */
+    @media (max-width: 620px) {
+      .shell { padding: 24px 16px 48px; }
+      .body  { grid-template-columns: 1fr; }
+      .cards { flex-direction: row; flex-wrap: wrap; }
+      .card  { flex: 1 1 calc(50% - 4px); min-width: 130px; }
+      .display-body { min-height: 260px; }
+    }
+
     /* ── Keyboard hint ── */
     .hint {
       font-family: var(--mono);
@@ -301,7 +318,7 @@
     }
 
     kbd {
-      background: #eef0f4;
+      background: #ede9e3;
       border: 1px solid var(--border-hi);
       border-radius: 3px;
       padding: 1px 6px;
@@ -322,20 +339,25 @@
     </div>
   </header>
 
-  <!-- Cards injected here -->
-  <div class="cards" id="cards"></div>
+  <!-- Two-column body -->
+  <div class="body">
 
-  <!-- Display panel -->
-  <div class="display-wrap" id="displayWrap">
-    <div class="display-header">
-      <span class="display-label">Prompt</span>
-      <span class="display-title" id="displayTitle">—</span>
-      <button class="copy-btn" id="copyBtn" style="visibility:hidden" onclick="copyAgain()">COPY AGAIN</button>
+    <!-- Left: prompt list -->
+    <div class="cards" id="cards"></div>
+
+    <!-- Right: display panel -->
+    <div class="display-wrap" id="displayWrap">
+      <div class="display-header">
+        <span class="display-label">Prompt</span>
+        <span class="display-title" id="displayTitle">—</span>
+        <button class="copy-btn" id="copyBtn" style="visibility:hidden" onclick="copyAgain()">COPY AGAIN</button>
+      </div>
+      <div class="display-body">
+        <span class="placeholder" id="placeholder">← Select a prompt to preview and copy it.</span>
+        <pre id="displayBody" style="display:none"></pre>
+      </div>
     </div>
-    <div class="display-body">
-      <span class="placeholder" id="placeholder">← Select a prompt above to preview and copy it.</span>
-      <pre id="displayBody" style="display:none"></pre>
-    </div>
+
   </div>
 
   <footer>click once · select &amp; copy · paste anywhere</footer>
